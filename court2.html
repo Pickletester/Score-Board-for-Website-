@@ -1,1 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Scoreboard — Court 2</title>
+
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      color: #fff;
+      font-family: Arial, Helvetica, sans-serif;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      width: min(1200px, 95vw);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      text-align: center;
+      align-items: center;
+    }
+
+    input {
+      background: transparent;
+      border: none;
+      color: #fff;
+      width: 100%;
+      outline: none;
+      text-align: center;
+    }
+
+    .name {
+      font-size: 56px;
+      font-weight: 700;
+      margin-bottom: 18px;
+    }
+
+    .score {
+      font-size: 150px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .hint {
+      position: fixed;
+      bottom: 12px;
+      left: 12px;
+      font-size: 14px;
+      opacity: 0.65;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div>
+      <input id="p1" class="name" value="Player 1" />
+      <input id="s1" class="score" value="0" />
+    </div>
+
+    <div>
+      <input id="p2" class="name" value="Player 2" />
+      <input id="s2" class="score" value="0" />
+    </div>
+  </div>
+
+  <div class="hint">Court 2 (Firebase: "scoreboard 2")</div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+    // ✅ Your Firebase config (live-score-board-f4952)
+    const firebaseConfig = {
+      apiKey: "AIzaSyD1_a8hRm4E0JtMMhZPryZRTweXIL7Mm8k",
+      authDomain: "live-score-board-f4952.firebaseapp.com",
+      databaseURL: "https://live-score-board-f4952-default-rtdb.firebaseio.com",
+      projectId: "live-score-board-f4952",
+      storageBucket: "live-score-board-f4952.firebasestorage.app",
+      messagingSenderId: "996622328680",
+      appId: "1:996622328680:web:5472b32f0514680bff2cdd"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // ✅ Court 2 node (with space)
+    const dbRef = ref(db, "scoreboard 2");
+
+    const p1 = document.getElementById("p1");
+    const p2 = document.getElementById("p2");
+    const s1 = document.getElementById("s1");
+    const s2 = document.getElementById("s2");
+
+    // Prevent feedback loop while we are applying remote updates
+    let applyingRemote = false;
+
+    // Listen for updates from Firebase (other browser)
+    onValue(dbRef, (snap) => {
+      const data = snap.val();
+      if (!data) return;
+
+      applyingRemote = true;
+      p1.value = data.p1 ?? "Player 1";
+      p2.value = data.p2 ?? "Player 2";
+      s1.value = data.s1 ?? "0";
+      s2.value = data.s2 ?? "0";
+      applyingRemote = false;
+    });
+
+    // Write updates to Firebase (this browser)
+    function sync() {
+      if (applyingRemote) return;
+
+      set(dbRef, {
+        p1: p1.value,
+        p2: p2.value,
+        s1: s1.value,
+        s2: s2.value
+      });
+    }
+
+    // Sync on any input change
+    [p1, p2, s1, s2].forEach((el) => {
+      el.addEventListener("input", sync);
+    });
+  </script>
+</body>
+</html>
 
