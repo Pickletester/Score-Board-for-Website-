@@ -1,136 +1,134 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Scoreboard — Court 2</title>
-
+  <meta charset="UTF-8">
+  <title>Pickleball Scoreboard — Court 2</title>
   <style>
-    body {
-      margin: 0;
-      background: #000;
-      color: #fff;
-      font-family: Arial, Helvetica, sans-serif;
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .container {
-      width: min(1200px, 95vw);
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 80px;
-      text-align: center;
-      align-items: center;
-    }
-
-    input {
-      background: transparent;
-      border: none;
-      color: #fff;
-      width: 100%;
-      outline: none;
-      text-align: center;
-    }
-
-    .name {
-      font-size: 56px;
-      font-weight: 700;
-      margin-bottom: 18px;
-    }
-
-    .score {
-      font-size: 150px;
-      font-weight: 900;
-      line-height: 1;
-    }
-
-    .hint {
-      position: fixed;
-      bottom: 12px;
-      left: 12px;
-      font-size: 14px;
-      opacity: 0.65;
-    }
+    body { margin: 0; background: black; color: white; font-family: sans-serif; overflow: hidden; }
+    .container { position: relative; width: 832px; height: 384px; display: flex; border: 1px solid #444; }
+    .player-area { width: 245px; display: flex; flex-direction: column; }
+    .player-box { height: 192px; border: 1px solid white; background: #1a365d; display: flex; align-items: center; justify-content: center; }
+    .score-area { width: 110px; border: 1px solid white; background: #808080; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .info-panel { flex-grow: 1; padding: 20px; text-align: right; }
+    input { background: none; border: none; color: white; font-weight: bold; text-align: center; width: 100%; outline: none; }
+    .input-p { font-size: 24px; }
+    .input-s { font-size: 85px; }
+    .controls button { background: #333; color: white; border: 1px solid white; cursor: pointer; padding: 5px 10px; margin: 2px; }
+    #clock { font-size: 18px; margin-top: 50px; }
   </style>
 </head>
-
 <body>
-  <div class="container">
-    <div>
-      <input id="p1" class="name" value="Player 1" />
-      <input id="s1" class="score" value="0" />
-    </div>
 
-    <div>
-      <input id="p2" class="name" value="Player 2" />
-      <input id="s2" class="score" value="0" />
+<div class="container">
+  <div class="player-area">
+    <div class="player-box"><input id="p4" class="input-p" value="PLAYER 4"></div>
+    <div class="player-box"><input id="p3" class="input-p" value="PLAYER 3"></div>
+  </div>
+
+  <div class="score-area">
+    <input id="score1" class="input-s" value="0">
+    <div class="controls">
+      <button onclick="adjust('score1', 1)">▲</button>
+      <button onclick="adjust('score1', -1)">▼</button>
     </div>
   </div>
 
-  <div class="hint">Court 2 (Firebase: "scoreboard 2")</div>
+  <div class="score-area">
+    <input id="score2" class="input-s" value="0">
+    <div class="controls">
+      <button onclick="adjust('score2', 1)">▲</button>
+      <button onclick="adjust('score2', -1)">▼</button>
+    </div>
+  </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+  <div class="player-area">
+    <div class="player-box"><input id="p1" class="input-p" value="PLAYER 1"></div>
+    <div class="player-box"><input id="p2" class="input-p" value="PLAYER 2"></div>
+  </div>
 
-    // ✅ Your Firebase config (live-score-board-f4952)
-    const firebaseConfig = {
-      apiKey: "AIzaSyD1_a8hRm4E0JtMMhZPryZRTweXIL7Mm8k",
-      authDomain: "live-score-board-f4952.firebaseapp.com",
-      databaseURL: "https://live-score-board-f4952-default-rtdb.firebaseio.com",
-      projectId: "live-score-board-f4952",
-      storageBucket: "live-score-board-f4952.firebasestorage.app",
-      messagingSenderId: "996622328680",
-      appId: "1:996622328680:web:5472b32f0514680bff2cdd"
-    };
+  <div class="info-panel">
+    EVENT NAME<br>
+    <input id="event" value="TOURNAMENT" style="text-align:right;"><br><br>
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+    GAMES<br>
+    <input id="games" value="0-0, 0-0" style="text-align:right;"><br>
 
-    // ✅ Court 2 node (with space)
-    const dbRef = ref(db, "scoreboard 2");
+    <div id="clock">00:00:00 PM</div>
 
-    const p1 = document.getElementById("p1");
-    const p2 = document.getElementById("p2");
-    const s1 = document.getElementById("s1");
-    const s2 = document.getElementById("s2");
+    <button onclick="swap()" style="margin-top:20px; background:#444; color:white; border:1px solid white; cursor:pointer;">
+      SWAP SIDES
+    </button>
+  </div>
+</div>
 
-    // Prevent feedback loop while we are applying remote updates
-    let applyingRemote = false;
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
-    // Listen for updates from Firebase (other browser)
-    onValue(dbRef, (snap) => {
-      const data = snap.val();
-      if (!data) return;
+  // ✅ NEW Firebase project config (live-score-board-f4952)
+  const firebaseConfig = {
+    apiKey: "AIzaSyD1_a8hRm4E0JtMMhZPryZRTweXIL7Mm8k",
+    authDomain: "live-score-board-f4952.firebaseapp.com",
+    databaseURL: "https://live-score-board-f4952-default-rtdb.firebaseio.com",
+    projectId: "live-score-board-f4952",
+    storageBucket: "live-score-board-f4952.firebasestorage.app",
+    messagingSenderId: "996622328680",
+    appId: "1:996622328680:web:5472b32f0514680bff2cdd"
+  };
 
-      applyingRemote = true;
-      p1.value = data.p1 ?? "Player 1";
-      p2.value = data.p2 ?? "Player 2";
-      s1.value = data.s1 ?? "0";
-      s2.value = data.s2 ?? "0";
-      applyingRemote = false;
-    });
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
 
-    // Write updates to Firebase (this browser)
-    function sync() {
-      if (applyingRemote) return;
+  // ✅ Court 2 node name (with space)
+  const dbRef = ref(db, "scoreboard 2");
 
-      set(dbRef, {
-        p1: p1.value,
-        p2: p2.value,
-        s1: s1.value,
-        s2: s2.value
+  // Listen for updates from other browsers
+  onValue(dbRef, (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      Object.keys(data).forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.value !== data[id]) el.value = data[id];
       });
     }
+  });
 
-    // Sync on any input change
-    [p1, p2, s1, s2].forEach((el) => {
-      el.addEventListener("input", sync);
-    });
-  </script>
+  // Send data to Firebase
+  function sync() {
+    const data = {};
+    document.querySelectorAll('input').forEach(el => data[el.id] = el.value);
+    set(dbRef, data);
+  }
+
+  // Attach sync to all inputs
+  document.querySelectorAll('input').forEach(el => el.oninput = sync);
+
+  function safeInt(v) {
+    const n = parseInt(v, 10);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  window.adjust = (id, amt) => {
+    const el = document.getElementById(id);
+    el.value = Math.max(0, safeInt(el.value) + amt);
+    sync();
+  };
+
+  window.swap = () => {
+    const p1 = document.getElementById('p1').value, p2 = document.getElementById('p2').value;
+    const p3 = document.getElementById('p3').value, p4 = document.getElementById('p4').value;
+    const s1 = document.getElementById('score1').value, s2 = document.getElementById('score2').value;
+
+    document.getElementById('p1').value = p4; document.getElementById('p4').value = p1;
+    document.getElementById('p2').value = p3; document.getElementById('p3').value = p2;
+    document.getElementById('score1').value = s2; document.getElementById('score2').value = s1;
+    sync();
+  };
+
+  setInterval(() => {
+    document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+  }, 1000);
+</script>
+
 </body>
 </html>
-
