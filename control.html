@@ -1,129 +1,68 @@
 <!doctype html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Live Scoreboard — Control</title>
-  <style>
-    html,body{margin:0;height:100%;background:#0b0b0b;color:#fff;font-family:Arial,Helvetica,sans-serif}
-    .wrap{max-width:700px;margin:0 auto;padding:24px}
-    h1{margin:0 0 18px 0}
-    .card{background:#151515;border:1px solid #2a2a2a;border-radius:14px;padding:16px;margin-bottom:16px}
-    label{display:block;font-size:14px;opacity:.8;margin:12px 0 6px}
-    input{width:100%;padding:12px;border-radius:10px;border:1px solid #333;background:#0f0f0f;color:#fff;font-size:16px}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    button{cursor:pointer;margin-top:14px;width:100%;padding:12px;border-radius:12px;border:0;background:#2d7cff;color:#fff;font-size:16px;font-weight:700}
-    .small{font-size:13px;opacity:.75;margin-top:10px}
-    .status{margin-top:10px;font-size:14px;opacity:.9}
-    .btn2{background:#444}
-    .btn3{background:#b33a3a}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Score Control</title>
+
+<style>
+body{
+  font-family:Arial;
+  background:#111;
+  color:#fff;
+  padding:20px;
+}
+input,button{
+  padding:12px;
+  margin:6px 0;
+  width:100%;
+  font-size:18px;
+}
+button{
+  background:#2d7cff;
+  color:#fff;
+  border:0;
+}
+</style>
 </head>
+
 <body>
-  <div class="wrap">
-    <h1>Scoreboard Control (Court 1)</h1>
 
-    <div class="card">
-      <div class="row">
-        <div>
-          <label>Player 1</label>
-          <input id="p1" placeholder="Player 1 name" />
-        </div>
-        <div>
-          <label>Player 2</label>
-          <input id="p2" placeholder="Player 2 name" />
-        </div>
-      </div>
+<h2>Court 1 Control</h2>
 
-      <div class="row">
-        <div>
-          <label>Score 1</label>
-          <input id="s1" type="number" min="0" step="1" />
-        </div>
-        <div>
-          <label>Score 2</label>
-          <input id="s2" type="number" min="0" step="1" />
-        </div>
-      </div>
+<input id="p1" placeholder="Player 1">
+<input id="p2" placeholder="Player 2">
+<input id="s1" type="number" placeholder="Score 1">
+<input id="s2" type="number" placeholder="Score 2">
 
-      <button id="save">Save</button>
-      <button class="btn2" id="plus1">+1 Left</button>
-      <button class="btn2" id="plus2">+1 Right</button>
-      <button class="btn3" id="reset">Reset (0–0)</button>
+<button onclick="save()">Save</button>
 
-      <div class="status" id="status">Not connected yet…</div>
-      <div class="small">Tip: Open <b>screen.html</b> on the TV, and keep this page on your phone.</div>
-    </div>
-  </div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyD1_a8hRm4E0JtMMhZPryZRTweXIL7Mm8k",
+  authDomain: "live-score-board-f4952.firebaseapp.com",
+  databaseURL: "https://live-score-board-f4952-default-rtdb.firebaseio.com",
+  projectId: "live-score-board-f4952",
+  storageBucket: "live-score-board-f4952.firebasestorage.app",
+  messagingSenderId: "996622328680",
+  appId: "1:996622328680:web:5472b32f0514680bff2cdd"
+};
 
-    // ✅ PASTE YOUR FIREBASE CONFIG HERE (same as screen.html)
-    const firebaseConfig = {
-      apiKey: "PASTE_HERE",
-      authDomain: "PASTE_HERE",
-      databaseURL: "https://live-score-board-f4952-default-rtdb.firebaseio.com",
-      projectId: "live-score-board-f4952",
-      storageBucket: "PASTE_HERE",
-      messagingSenderId: "PASTE_HERE",
-      appId: "PASTE_HERE"
-    };
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-    const app = initializeApp(firebaseConfig);
-    const db  = getDatabase(app);
+window.save = function(){
+  set(ref(db,"scoreboard/court1"),{
+    p1: document.getElementById("p1").value,
+    p2: document.getElementById("p2").value,
+    s1: Number(document.getElementById("s1").value),
+    s2: Number(document.getElementById("s2").value)
+  });
+}
+</script>
 
-    const $ = (id) => document.getElementById(id);
-    const statusEl = $("status");
-
-    const scoreRef = ref(db, "scoreboard/court1");
-
-    // keep form synced with DB
-    onValue(scoreRef, (snap) => {
-      const v = snap.val() || { p1:"Player 1", p2:"Player 2", s1:0, s2:0 };
-      $("p1").value = v.p1 ?? "";
-      $("p2").value = v.p2 ?? "";
-      $("s1").value = v.s1 ?? 0;
-      $("s2").value = v.s2 ?? 0;
-      statusEl.textContent = "Connected ✅";
-    }, (err) => {
-      console.error(err);
-      statusEl.textContent = "Error: " + (err?.message || err);
-    });
-
-    function readForm() {
-      return {
-        p1: $("p1").value || "Player 1",
-        p2: $("p2").value || "Player 2",
-        s1: Number($("s1").value || 0),
-        s2: Number($("s2").value || 0)
-      };
-    }
-
-    async function save(data) {
-      await set(scoreRef, data);
-      statusEl.textContent = "Saved ✅";
-      setTimeout(()=>statusEl.textContent="Connected ✅", 800);
-    }
-
-    $("save").onclick = async () => save(readForm());
-
-    $("plus1").onclick = async () => {
-      const v = readForm();
-      v.s1 += 1;
-      await save(v);
-    };
-
-    $("plus2").onclick = async () => {
-      const v = readForm();
-      v.s2 += 1;
-      await save(v);
-    };
-
-    $("reset").onclick = async () => {
-      await save({ p1:"Player 1", p2:"Player 2", s1:0, s2:0 });
-    };
-  </script>
 </body>
 </html>
